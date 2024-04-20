@@ -1,4 +1,5 @@
-add_executable(uni_so2_p main.cpp)
+add_executable(uni_so2_p main.cpp Object.cpp
+        Sprite.cpp)
 
 # Compile options
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

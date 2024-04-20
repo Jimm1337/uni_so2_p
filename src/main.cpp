@@ -1,4 +1,6 @@
 #include <raylib.h>
+#include "Object.hpp"
+#include "Sprite.hpp"
 
 int main() {
   InitWindow(800, 600, "Hello, World!");
