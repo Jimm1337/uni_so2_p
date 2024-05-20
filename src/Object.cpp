@@ -83,10 +83,18 @@ void Object::destroy() {
     m_updateThread.join();
   }
 
+  m_behaviors.clear();
+
   onDestroy();
 }
 
 void Object::draw() const {
+}
+
+Rectangle Object::getRect() const {
+  const auto lock = std::unique_lock{ m_mutex };
+
+  return {m_position.x, m_position.y, 0.0F, 0.0F};
 }
 
 void Object::update(const std::stop_token& token, Object& object) {

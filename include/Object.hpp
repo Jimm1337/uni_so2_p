@@ -15,8 +15,11 @@ public:
   enum class TYPE : uint8_t {
     SPRITE,
     GRID,
+    OBSTACLE,
     PROJECTILE,
     TEXT,
+    INPUT,
+    PHYSICS,
     GENERIC [[maybe_unused]] = 255
   };
 
@@ -50,6 +53,13 @@ public:
     return m_position;
   }
 
+  void moveBy(const Vector2& offset) noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+
+    m_position.x += offset.x;
+    m_position.y += offset.y;
+  }
+
   [[nodiscard]] std::string getName() const noexcept {
     return m_name;
   }
@@ -58,10 +68,19 @@ public:
     return m_type;
   }
 
+  template< typename BehaviorType >
+  requires std::is_invocable_v< BehaviorType, Object& > &&
+           std::is_same_v< void, std::invoke_result_t< BehaviorType, Object& > >
+  void addBehavior(BehaviorType&& behavior) {
+    const auto lock = std::unique_lock{ m_mutex };
+    m_behaviors.emplace_back(std::forward< BehaviorType >(behavior));
+  }
+
   void create();
   void destroy();
 
-  virtual void draw() const;
+  virtual void                    draw() const;
+  [[nodiscard]] virtual Rectangle getRect() const;
 
 private:
   static void update(const std::stop_token& token, Object& object);

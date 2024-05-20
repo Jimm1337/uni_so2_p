@@ -12,7 +12,10 @@ public:
 
   enum class CLASS : uint8_t {
     PLAYER,
-    ENEMY,
+    ENEMY_PASSIVE,
+    ENEMY_SHOOTER,
+    ENEMY_COMMANDER,
+    ENEMY_MYSTERY,
     GENERIC [[maybe_unused]] = 255
   };
 
@@ -28,6 +31,7 @@ public:
   Sprite(std::string_view name,
          std::string_view texturePath,
          std::string_view destroyedTexturePath,
+         float            scale,
          CLASS            spriteClass,
          PositionType&&   position,
          BehaviorType&&... behaviors):
@@ -37,18 +41,12 @@ public:
            std::forward< BehaviorType >(behaviors)...),
     m_texture{ LoadTexture(texturePath.data()) },
     m_destroyedTexture{ LoadTexture(destroyedTexturePath.data()) },
-    m_spriteClass{ spriteClass } {
+    m_spriteClass{ spriteClass },
+    m_scale{ scale } {
   }
 
   [[nodiscard]] CLASS getSpriteClass() const noexcept {
     return m_spriteClass;
-  }
-
-  void moveBy(const Vector2& offset) noexcept {
-    const auto lock = std::unique_lock{ m_mutex };
-
-    m_position.x += offset.x;
-    m_position.y += offset.y;
   }
 
   [[nodiscard]] bool isDestroyed() const noexcept {
@@ -63,18 +61,23 @@ public:
     return m_visible;
   }
 
+
+
   void markDestroyed();
 
-  void draw() const override;
+  void                    draw() const override;
+  [[nodiscard]] Rectangle getRect() const override;
 
 private:
   void onUpdate() override;
+  void onDestroy() override;
 
 protected:
   Texture2D m_texture;
   Texture2D m_destroyedTexture;
   std::chrono::time_point< std::chrono::high_resolution_clock > m_destroyedTime;
   CLASS                                                         m_spriteClass;
+  float                                                         m_scale;
   bool m_destroyed{ false };
   bool m_visible{ true };
 };
