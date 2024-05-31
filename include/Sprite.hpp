@@ -32,8 +32,8 @@ public:
          std::string_view texturePath,
          std::string_view destroyedTexturePath,
          float            scale,
-         CLASS            spriteClass,
          PositionType&&   position,
+         CLASS            spriteClass = CLASS::GENERIC,
          BehaviorType&&... behaviors):
     Object(name,
            Object::TYPE::SPRITE,
@@ -60,8 +60,6 @@ public:
 
     return m_visible;
   }
-
-
 
   void markDestroyed();
 

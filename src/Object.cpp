@@ -1,4 +1,6 @@
 #include "Object.hpp"
+#include <algorithm>
+#include <ranges>
 
 namespace so {
 
@@ -101,7 +103,9 @@ void Object::update(const std::stop_token& token, Object& object) {
   while (!token.stop_requested()) {
     const auto lock = std::unique_lock{ object.m_mutex };
 
-    for (const auto& behavior : object.m_behaviors) { behavior(object); }
+    std::ranges::for_each(object.m_behaviors, [&object](const auto& behavior) {
+      behavior(object);
+    });
 
     object.onUpdate();
   }

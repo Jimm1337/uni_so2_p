@@ -15,7 +15,6 @@ public:
   enum class TYPE : uint8_t {
     SPRITE,
     GRID,
-    OBSTACLE,
     PROJECTILE,
     TEXT,
     INPUT,
