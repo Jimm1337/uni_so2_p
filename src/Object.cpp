@@ -4,6 +4,9 @@
 
 namespace so {
 
+std::recursive_mutex Object::Object::gpuMutex;
+std::recursive_mutex Object::Object::kbdMutex;
+
 Object::Object(const Object& other):
   m_name(other.m_name),
   m_position(other.m_position),
@@ -18,7 +21,7 @@ Object::Object(Object&& other) noexcept:
   m_behaviors(std::move(other.m_behaviors)),
   m_type(other.m_type),
   m_updateThread(std::move(other.m_updateThread)),
-  m_valid(other.m_valid) {
+  m_valid(other.m_valid), m_hidden(other.m_hidden) {
   other.m_valid = false;
 }
 
@@ -49,6 +52,7 @@ Object& Object::operator=(Object&& other) noexcept {
   m_type         = other.m_type;
   m_updateThread = std::move(other.m_updateThread);
   m_valid        = other.m_valid;
+  m_hidden       = other.m_hidden;
 
   other.m_valid = false;
 
@@ -80,12 +84,7 @@ void Object::destroy() {
 
   m_valid = false;
 
-  if (m_updateThread.joinable()) [[likely]] {
-    m_updateThread.request_stop();
-    m_updateThread.join();
-  }
-
-  m_behaviors.clear();
+  if (m_updateThread.joinable()) [[likely]] { m_updateThread.request_stop(); }
 
   onDestroy();
 }
@@ -96,7 +95,7 @@ void Object::draw() const {
 Rectangle Object::getRect() const {
   const auto lock = std::unique_lock{ m_mutex };
 
-  return {m_position.x, m_position.y, 0.0F, 0.0F};
+  return { m_position.x, m_position.y, 0.0F, 0.0F };
 }
 
 void Object::update(const std::stop_token& token, Object& object) {
@@ -108,6 +107,8 @@ void Object::update(const std::stop_token& token, Object& object) {
     });
 
     object.onUpdate();
+
+//    std::this_thread::sleep_for(std::chrono::milliseconds(16)); // FPS = 60
   }
 }
 

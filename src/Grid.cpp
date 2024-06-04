@@ -6,23 +6,26 @@ namespace so {
 
 std::vector< size_t > Grid::getRectIndices(Rectangle   rect,
                                            Grid::uVec2 cellSize,
-                                           size_t      gridWidth) noexcept  {
+                                           size_t      gridWidth) noexcept {
   const auto xStart = static_cast< size_t >(rect.x / cellSize.x);
   const auto yStart = static_cast< size_t >(rect.y / cellSize.y);
-  const auto xEnd =
-    static_cast< size_t >((rect.x + rect.width) / cellSize.x) +
-          static_cast< size_t >(rect.x + rect.width) % cellSize.x ==
-        0 ?
-      0 :
-      1;
-  const auto yEnd =
-    static_cast< size_t >((rect.y + rect.height) / cellSize.y) +
-          static_cast< size_t >(rect.y + rect.height) % cellSize.y ==
-        0 ?
-      0 :
-      1;
+  const auto xEnd   = static_cast< size_t >((rect.x + rect.width) / cellSize.x)
+    //          +
+    //          static_cast< size_t >(rect.x + rect.width) % cellSize.x ==
+    //        0 ?
+    //      0 :
+    //      1
+    ;
+  const auto yEnd = static_cast< size_t >((rect.y + rect.height) / cellSize.y)
+    //          +
+    //          static_cast< size_t >(rect.y + rect.height) % cellSize.y ==
+    //        0 ?
+    //      0 :
+    //      1
+    ;
 
-  std::vector< size_t > indices{ (xEnd - xStart) * (yEnd - yStart) };
+  std::vector< size_t > indices{};
+  indices.resize((xEnd - xStart) * (yEnd - yStart));
   for (int i = 0; i < yEnd - yStart; ++i) {
     for (int j = 0; j < xEnd - xStart; ++j) {
       indices[i * (xEnd - xStart) + j] =
@@ -38,7 +41,8 @@ Grid::Grid(Grid&& other) noexcept:
   m_cellSize{ other.m_cellSize },
   m_gridSize(other.m_gridSize),
   m_locations(std::move(other.m_locations)),
-  m_cells{ std::move(other.m_cells) }, m_gridClass{ other.m_gridClass } {
+  m_cells{ std::move(other.m_cells) },
+  m_gridClass{ other.m_gridClass } {
   other.m_cellSize = { 0, 0 };
   other.m_cells.clear();
   other.m_gridSize = { 0, 0 };
@@ -56,7 +60,7 @@ Grid& Grid::operator=(Grid&& other) noexcept {
   m_gridSize  = other.m_gridSize;
   m_locations = std::move(other.m_locations);
   m_cells     = std::move(other.m_cells);
-        m_gridClass = other.m_gridClass;
+  m_gridClass = other.m_gridClass;
 
   other.m_cellSize = { 0, 0 };
   other.m_cells.clear();
@@ -113,10 +117,14 @@ void Grid::removeCell(uVec2 position) {
 void Grid::draw() const {
   const auto lock = std::unique_lock{ m_mutex };
 
+  if (m_hidden) [[unlikely]] { return; }
+
   // DEBUG DRAWING
   std::ranges::for_each(m_cells, [&](const auto& cell) {
     if (cell.occupied) {
+      gpuMutex.lock();
       DrawRectangle(cell.x, cell.y, m_cellSize.x, m_cellSize.y, RED);
+      gpuMutex.unlock();
     }
   });
 }

@@ -44,6 +44,9 @@ public:
 
   [[nodiscard]] bool isDestroyed() const noexcept;
 
+private:
+  void onCreate() override;
+
 protected:
   std::mt19937 m_destructionGen;
   Color        m_cellColor;

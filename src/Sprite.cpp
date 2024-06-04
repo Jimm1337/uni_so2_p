@@ -35,12 +35,16 @@ Sprite& Sprite::operator=(Sprite&& other) noexcept {
 void Sprite::draw() const {
   const auto lock = std::unique_lock{ m_mutex };
 
+  if (m_hidden) [[unlikely]] { return; }
+
   if (m_visible) [[likely]] {
+    gpuMutex.lock();
     if (m_destroyed) [[unlikely]] {
       DrawTextureEx(m_destroyedTexture, m_position, 0.0F, m_scale, WHITE);
     } else [[likely]] {
       DrawTextureEx(m_texture, m_position, 0.0F, m_scale, WHITE);
     }
+    gpuMutex.unlock();
   }
 }
 
@@ -76,8 +80,10 @@ void Sprite::onUpdate() {
 }
 
 void Sprite::onDestroy() {
+  gpuMutex.lock();
   UnloadTexture(m_texture);
   UnloadTexture(m_destroyedTexture);
+  gpuMutex.unlock();
 }
 
 } // namespace so

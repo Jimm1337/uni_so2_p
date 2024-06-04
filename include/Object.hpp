@@ -18,7 +18,6 @@ public:
     PROJECTILE,
     TEXT,
     INPUT,
-    PHYSICS,
     GENERIC [[maybe_unused]] = 255
   };
 
@@ -29,7 +28,7 @@ public:
   virtual ~Object();
 
   template< typename PositionType, typename... BehaviorType >
-  requires std::is_base_of_v< Vector2, PositionType > &&
+  requires std::is_same_v< Vector2, std::remove_cvref_t< PositionType > > &&
              (std::is_invocable_v< BehaviorType, Object& > && ...)
   Object(std::string_view name,
          TYPE             type,
@@ -67,6 +66,26 @@ public:
     return m_type;
   }
 
+  [[nodiscard]] bool isValid() const noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+    return m_valid;
+  }
+
+  void hide() noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+    m_hidden        = true;
+  }
+
+  void unHide() noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+    m_hidden        = false;
+  }
+
+  [[nodiscard]] bool isHidden() const noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+    return m_hidden;
+  }
+
   template< typename BehaviorType >
   requires std::is_invocable_v< BehaviorType, Object& > &&
            std::is_same_v< void, std::invoke_result_t< BehaviorType, Object& > >
@@ -84,6 +103,10 @@ public:
 private:
   static void update(const std::stop_token& token, Object& object);
 
+public:
+  static std::recursive_mutex gpuMutex;
+  static std::recursive_mutex kbdMutex;
+
 protected:
   mutable std::recursive_mutex                  m_mutex;
   std::vector< std::function< void(Object&) > > m_behaviors;
@@ -92,6 +115,7 @@ protected:
   Vector2                                       m_position;
   TYPE                                          m_type;
   bool                                          m_valid{ false };
+  bool                                          m_hidden{ false };
 
   virtual void onCreate();
   virtual void onDestroy();

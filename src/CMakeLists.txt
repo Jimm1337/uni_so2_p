@@ -4,7 +4,9 @@ add_executable(uni_so2_p main.cpp Object.cpp
         Text.cpp
         Grid.cpp
         Canvas.cpp
-        Obstacle.cpp)
+        Obstacle.cpp
+        Input.cpp
+        Game.cpp)
 
 # Compile options
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

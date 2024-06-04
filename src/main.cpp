@@ -1,18 +1,27 @@
-#include <raylib.h>
-#include "Object.hpp"
-#include "Sprite.hpp"
+#include <fmt/core.h>
+#include "Game.hpp"
 
 int main() {
-  InitWindow(800, 600, "Hello, World!");
+  fmt::print("{}\n", RES_PATH);
 
-  SetTargetFPS(60);
+//  InitWindow(800, 600, "Hello, World!");
+//
+//  SetTargetFPS(60);
+//
+//  while (!WindowShouldClose()) {
+//    BeginDrawing();
+//    ClearBackground(RAYWHITE);
+//    DrawPixel(10, 10, RED);
+//    EndDrawing();
+//  }
+//
+//  CloseWindow();
 
-  while (!WindowShouldClose()) {
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
-    DrawText("Hello, World!", 10, 10, 20, DARKGRAY);
-    EndDrawing();
-  }
+  InitWindow(so::Game::WINDOW_SIZE.x, so::Game::WINDOW_SIZE.y, so::Game::WINDOW_NAME.data());
+  SetTargetFPS(so::Game::WINDOW_FPS);
+
+  so::Game game;
+  game.run();
 
   CloseWindow();
 

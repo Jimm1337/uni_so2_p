@@ -34,4 +34,6 @@ include_directories(${gsl_SOURCE_DIR}/include)
 
 include_directories(include)
 
+ADD_COMPILE_DEFINITIONS(RES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/res/")
+
 add_subdirectory(src)

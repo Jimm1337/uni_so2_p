@@ -31,7 +31,11 @@ public:
     m_fontSize{ fontSize },
     m_color{ color },
     m_spacing{ spacing },
-    m_font{ LoadFont(fontPath.data()) } {
+    m_font{ [&] {
+      const auto lock = std::unique_lock{ gpuMutex };
+      const auto font = LoadFontEx(fontPath.data(), 32, nullptr, 0);
+      return font;
+    }() } {
   }
 
   void setText(std::string_view text) noexcept {

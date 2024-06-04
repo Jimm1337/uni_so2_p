@@ -1,6 +1,7 @@
 #ifndef UNI_SO2_P_SPRITE_HPP
 #define UNI_SO2_P_SPRITE_HPP
 
+#include <raylib.h>
 #include <chrono>
 #include "Object.hpp"
 
@@ -8,14 +9,9 @@ namespace so {
 
 class Sprite : public Object {
 public:
-  static constexpr auto DESTROYED_TIME = 1000;
+  static constexpr auto DESTROYED_TIME = 250;
 
   enum class CLASS : uint8_t {
-    PLAYER,
-    ENEMY_PASSIVE,
-    ENEMY_SHOOTER,
-    ENEMY_COMMANDER,
-    ENEMY_MYSTERY,
     GENERIC [[maybe_unused]] = 255
   };
 
@@ -26,7 +22,7 @@ public:
   ~Sprite() override = default;
 
   template< typename PositionType, typename... BehaviorType >
-  requires std::is_base_of_v< Vector2, PositionType > &&
+  requires std::is_same_v< Vector2, std::remove_cvref_t<PositionType> > &&
              (std::is_invocable_v< BehaviorType, Sprite& > && ...)
   Sprite(std::string_view name,
          std::string_view texturePath,
@@ -39,8 +35,16 @@ public:
            Object::TYPE::SPRITE,
            std::forward< PositionType >(position),
            std::forward< BehaviorType >(behaviors)...),
-    m_texture{ LoadTexture(texturePath.data()) },
-    m_destroyedTexture{ LoadTexture(destroyedTexturePath.data()) },
+    m_texture{ [&] {
+      const auto lock = std::unique_lock{ gpuMutex };
+      const auto tex  = LoadTexture(texturePath.data());
+      return tex;
+    }() },
+    m_destroyedTexture{ [&] {
+      const auto lock = std::unique_lock{ gpuMutex };
+      const auto tex  = LoadTexture(destroyedTexturePath.data());
+      return tex;
+    }() },
     m_spriteClass{ spriteClass },
     m_scale{ scale } {
   }

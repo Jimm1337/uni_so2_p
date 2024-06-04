@@ -2,6 +2,8 @@
 #define UNI_SO2_P_GRID_HPP
 
 #include "Object.hpp"
+#include <unordered_map>
+#include <vector>
 
 namespace so {
 
@@ -63,6 +65,7 @@ public:
           };
         }
       }
+      return cells;
     }() },
     m_cellSize{ cellSize },
     m_gridSize{ gridSize },
@@ -75,8 +78,13 @@ public:
   void putCell(uVec2 position);
   void removeCell(uVec2 position);
 
+  [[nodiscard]] CLASS getGridClass() const noexcept {
+    return m_gridClass;
+  }
+
   void                    draw() const override;
   [[nodiscard]] Rectangle getRect() const override;
+
 
 protected:
   std::vector< Cell >                   m_cells;

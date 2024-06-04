@@ -47,6 +47,8 @@ Obstacle& Obstacle::operator=(Obstacle&& other) noexcept {
 void Obstacle::draw() const {
   const auto lock = std::unique_lock{ m_mutex };
 
+  if (m_hidden) [[unlikely]] { return; }
+
   std::ranges::for_each(m_cells, [this](const auto& cell) {
     const auto [x, y, set]{ cell };
 
@@ -54,11 +56,13 @@ void Obstacle::draw() const {
 
     const auto position = cellIdxToPosition(y * m_gridSize.x + x);
 
+    gpuMutex.lock();
     DrawRectangle(static_cast< int >(position.x),
                   static_cast< int >(position.y),
                   static_cast< int >(m_cellSize.x),
                   static_cast< int >(m_cellSize.y),
                   m_cellColor);
+    gpuMutex.unlock();
   });
 }
 
@@ -158,9 +162,24 @@ void Obstacle::impactAt(Vector2 position, bool upwards) noexcept {
 bool Obstacle::isDestroyed() const noexcept {
   const auto lock = std::unique_lock{ m_mutex };
 
-  return std::ranges::all_of(m_cells, [](const auto& cell) {
-    return !cell.occupied;
-  });
+  return std::ranges::all_of(m_cells,
+                             [](const auto& cell) { return !cell.occupied; });
+}
+
+void Obstacle::onCreate() {
+  const auto lock = std::unique_lock{ m_mutex };
+
+  std::ranges::for_each(m_cells, [](auto& cell) { cell.occupied = true; });
+
+  const auto leftMargin  = m_gridSize.x / 4;
+  const auto rightMargin = m_gridSize.x - leftMargin;
+  const auto topMargin   = m_gridSize.y / 2;
+
+  for (auto x = topMargin; x < m_gridSize.y; ++x) {
+    for (auto y = leftMargin; y < rightMargin; ++y) {
+      m_cells[getCellIndex({ x, y }, m_gridSize.x)].occupied = false;
+    }
+  }
 }
 
 } // namespace so

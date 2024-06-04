@@ -54,12 +54,16 @@ void Projectile::markCollided() {
 void Projectile::draw() const {
   const auto lock = std::unique_lock{ m_mutex };
 
+  if (m_hidden) [[unlikely]] { return; }
+
   if (!m_collided) [[likely]] {
+    gpuMutex.lock();
     DrawRectangle(static_cast< int >(m_position.x),
                   static_cast< int >(m_position.y),
                   static_cast< int >(m_width),
                   static_cast< int >(m_height),
                   m_color);
+    gpuMutex.unlock();
   }
 }
 
@@ -74,11 +78,13 @@ void Projectile::onUpdate() {
 
   if (m_collided) [[unlikely]] { return; }
 
+  gpuMutex.lock();
   if (m_direction == Direction::UP) {
     m_position.y += m_speed * GetFrameTime();
   } else {
     m_position.y -= m_speed * GetFrameTime();
   }
+  gpuMutex.unlock();
 }
 
 } // namespace so
