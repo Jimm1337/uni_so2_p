@@ -176,13 +176,13 @@ void Game::addBehaviorsToPlayer() {
 
     if (IsKeyDown(KEY_LEFT)) {
       player.setPosition(
-        Vector2{ player.getPosition().x - 5,
+        Vector2{ player.getPosition().x - .5F * GetFrameTime(),
                  player.getPosition().y });
     }
 
     if (IsKeyDown(KEY_RIGHT)) {
       player.setPosition(
-        Vector2{ player.getPosition().x + 5,
+        Vector2{ player.getPosition().x + .5F * GetFrameTime(),
                  player.getPosition().y });
     }
   });
