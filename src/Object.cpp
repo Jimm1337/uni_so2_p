@@ -102,13 +102,11 @@ void Object::update(const std::stop_token& token, Object& object) {
   while (!token.stop_requested()) {
     const auto lock = std::unique_lock{ object.m_mutex };
 
-    std::ranges::for_each(object.m_behaviors, [&object](const auto& behavior) {
+    std::ranges::for_each(object.m_behaviors, [&](const auto& behavior) {
       behavior(object);
     });
 
     object.onUpdate();
-
-//    std::this_thread::sleep_for(std::chrono::milliseconds(16)); // FPS = 60
   }
 }
 

@@ -3,7 +3,6 @@
 
 #include <unordered_map>
 #include "Canvas.hpp"
-#include "Input.hpp"
 #include "Obstacle.hpp"
 #include "Projectile.hpp"
 #include "Sprite.hpp"
@@ -30,7 +29,6 @@ public:
   void run();
 
 private:
-  Input                                         m_input;
   Canvas                                        m_canvas;
   Text                                          m_scoreText;
   Text                                          m_levelText;
@@ -88,7 +86,7 @@ private:
   static constexpr auto OBSTACLE_SIZE      = Grid::uVec2{ 80, 100 };
   static constexpr auto OBSTACLE_CELL_SIZE = Grid::uVec2{ 2, 2 };
   static constexpr auto SPEED_PER_LEVEL    = 100; // PIXELS/SECOND
-  static constexpr auto PLAYER_Y           = WINDOW_SIZE.y - 50;
+  static constexpr auto PLAYER_Y           = WINDOW_SIZE.y - 100;
   static constexpr auto ENEMIES_MAX     = WINDOW_SIZE.x / TEXTURE_ENEMY_WIDTH;
   static constexpr auto ENEMIES_PER_ROW = ENEMIES_MAX / 2 - 2;
   static constexpr auto ENEMY_PASSIVE_Y = WINDOW_SIZE.y - 300;

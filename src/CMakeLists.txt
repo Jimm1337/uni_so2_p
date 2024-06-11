@@ -5,7 +5,6 @@ add_executable(uni_so2_p main.cpp Object.cpp
         Grid.cpp
         Canvas.cpp
         Obstacle.cpp
-        Input.cpp
         Game.cpp)
 
 # Compile options

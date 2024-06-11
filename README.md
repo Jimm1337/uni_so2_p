@@ -18,7 +18,6 @@ Wielowątkowe space invaders, napisane w stylu obiektowym.
 
 ### WSPÓLNE SEKCJE:
 - GPU
-- KBD
 - INTERAKCJE POMIĘDZY OBIEKTAMI
 
 ### WĄTKI:

@@ -52,7 +52,7 @@ void Canvas::draw() const {
   DrawRectangleLinesEx(getRect(), LINE_THICKNESS, m_frameColor);
   gpuMutex.unlock();
 
-  std::ranges::for_each(m_lines, [this](const auto& line) {
+  std::ranges::for_each(m_lines, [](const auto& line) {
     const auto [start, end, color]{ line };
 
     gpuMutex.lock();

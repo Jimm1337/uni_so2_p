@@ -5,7 +5,6 @@
 namespace so {
 
 Game::Game():
-  m_input{ "Keyboard" },
   m_canvas{ "Screen", { 0, 0 }, WINDOW_SIZE, GRAY },
   m_scoreText{ "Text__Score", "Score: 0", FONT_PATH, Vector2{ 10, 10 },
                FONT_SIZE,     FONT_COLOR, 1 },
@@ -56,11 +55,11 @@ void Game::run() {
   while (!WindowShouldClose()) {
     if (m_gameOver) [[unlikely]] {
       renderGameOverScreen();
-      if (m_input.isKeyDown(KEY_ENTER)) [[unlikely]] { startGame(); }
+      if (IsKeyDown(KEY_ENTER)) [[unlikely]] { startGame(); }
 
     } else if (!m_gameActive) [[unlikely]] {
       renderStartScreen();
-      if (m_input.isKeyDown(KEY_ENTER)) [[unlikely]] { startGame(); }
+      if (IsKeyDown(KEY_ENTER)) [[unlikely]] { startGame(); }
 
     } else [[likely]] {
       renderGameScreen();
@@ -132,7 +131,7 @@ void Game::renderStartScreen() {
 
   Object::gpuMutex.lock();
   DrawText(
-    "Press ENTER to start", 100, WINDOW_SIZE.y / 2, FONT_SIZE_CTA, FONT_COLOR);
+    "Press ENTER to start", 90, WINDOW_SIZE.y / 2, FONT_SIZE_CTA, FONT_COLOR);
   Object::gpuMutex.unlock();
 
   EndDrawing();
@@ -140,6 +139,8 @@ void Game::renderStartScreen() {
 
 void Game::renderGameOverScreen() {
   BeginDrawing();
+
+  ClearBackground(BLACK);
 
   m_canvas.draw();
 
@@ -162,25 +163,27 @@ void Game::renderGameOverScreen() {
 void Game::renderGameScreen() {
   BeginDrawing();
 
+  ClearBackground(BLACK);
+
   m_canvas.draw();
 
   EndDrawing();
 }
 
 void Game::addBehaviorsToPlayer() {
-  m_player.addBehavior([this](Object& object) {
+  m_player.addBehavior([](Object& object) {
     auto& player = dynamic_cast< Sprite& >(object);
 
-    if (m_input.isKeyDown(KEY_LEFT)) {
-      m_player.setPosition(
-        Vector2{ m_player.getPosition().x - 50 * GetFrameTime(),
-                 m_player.getPosition().y });
+    if (IsKeyDown(KEY_LEFT)) {
+      player.setPosition(
+        Vector2{ player.getPosition().x - 5,
+                 player.getPosition().y });
     }
 
-    if (m_input.isKeyDown(KEY_RIGHT)) {
-      m_player.setPosition(
-        Vector2{ m_player.getPosition().x + 50 * GetFrameTime(),
-                 m_player.getPosition().y });
+    if (IsKeyDown(KEY_RIGHT)) {
+      player.setPosition(
+        Vector2{ player.getPosition().x + 5,
+                 player.getPosition().y });
     }
   });
 }
@@ -267,7 +270,7 @@ void Game::addAllToCanvas() {
 void Game::initCanvas() {
   m_canvas.putFrame(YELLOW);
   m_canvas.putLine(
-    { 0, PLAYER_Y + 1 }, { WINDOW_SIZE.x, PLAYER_Y + 1 }, YELLOW);
+    { 0, PLAYER_Y + 32 }, { WINDOW_SIZE.x, PLAYER_Y + 32 }, YELLOW);
   m_canvas.putLine(
     { 0, OBSTACLE_Y + 1 }, { WINDOW_SIZE.x, OBSTACLE_Y + 1 }, DARKGRAY);
   addAllToCanvas();
@@ -280,84 +283,84 @@ void Game::startGame() {
   m_lives      = 3;
   m_level      = 1;
 
-  m_enemiesPassive = [] {
-    std::unordered_map< std::string, Sprite > map;
+//  m_enemiesPassive = [] {
+//    std::unordered_map< std::string, Sprite > map;
+//
+//    static auto id = 0;
+//
+//    for (auto i = 0; i < ENEMIES_PER_ROW * 2; ++i) {
+//      map.emplace("Enemy__Passive_" + std::to_string(id++), initEnemyPassive());
+//    }
+//
+//    return map;
+//  }();
+//
+//  m_enemiesShooter = [] {
+//    std::unordered_map< std::string, Sprite > map;
+//
+//    static auto id = 0;
+//
+//    for (auto i = 0; i < ENEMIES_PER_ROW * 2; ++i) {
+//      map.emplace("Enemy__Shooter_" + std::to_string(id++), initEnemyShooter());
+//    }
+//
+//    return map;
+//  }();
+//
+//  m_enemiesCommander = [] {
+//    std::unordered_map< std::string, Sprite > map;
+//
+//    static auto id = 0;
+//
+//    for (auto i = 0; i < ENEMIES_PER_ROW; ++i) {
+//      map.emplace("Enemy__Commander_" + std::to_string(id++),
+//                  initEnemyCommander());
+//    }
+//
+//    return map;
+//  }();
 
-    static auto id = 0;
+//  m_player = initPlayer();
 
-    for (auto i = 0; i < ENEMIES_PER_ROW * 2; ++i) {
-      map.emplace("Enemy__Passive_" + std::to_string(id++), initEnemyPassive());
-    }
+//  m_obstacleLL = { "Obstacle__LL",
+//                   Vector2{ WINDOW_SIZE.x / 4 - OBSTACLE_SIZE.x, OBSTACLE_Y },
+//                   OBSTACLE_SIZE,
+//                   OBSTACLE_CELL_SIZE,
+//                   OBSTACLE_COLOR };
+//
+//  m_obstacleLR = { "Obstacle__LR",
+//                   Vector2{ WINDOW_SIZE.x / 4 + 2 * OBSTACLE_SIZE.x,
+//                            OBSTACLE_Y },
+//                   OBSTACLE_SIZE,
+//                   OBSTACLE_CELL_SIZE,
+//                   OBSTACLE_COLOR };
+//
+//  m_obstacleRL = { "Obstacle__RL",
+//                   Vector2{ WINDOW_SIZE.x * 3 / 4 - 2 * OBSTACLE_SIZE.x,
+//                            OBSTACLE_Y },
+//                   OBSTACLE_SIZE,
+//                   OBSTACLE_CELL_SIZE,
+//                   OBSTACLE_COLOR };
+//
+//  m_obstacleRR = { "Obstacle__RR",
+//                   Vector2{ WINDOW_SIZE.x * 3 / 4 - OBSTACLE_SIZE.x,
+//                            OBSTACLE_Y },
+//                   OBSTACLE_SIZE,
+//                   OBSTACLE_CELL_SIZE,
+//                   OBSTACLE_COLOR };
+//
+//  m_scoreText = { "Text__Score", "Score: 0", FONT_PATH, Vector2{ 10, 10 },
+//                  FONT_SIZE,     FONT_COLOR, 1 };
+//
+//  m_levelText = { "Text__Level",
+//                  "Level: 1",
+//                  FONT_PATH,
+//                  Vector2{ WINDOW_SIZE.x - 200, WINDOW_SIZE.y - 40 },
+//                  FONT_SIZE,
+//                  FONT_COLOR,
+//                  1 };
 
-    return map;
-  }();
-
-  m_enemiesShooter = [] {
-    std::unordered_map< std::string, Sprite > map;
-
-    static auto id = 0;
-
-    for (auto i = 0; i < ENEMIES_PER_ROW * 2; ++i) {
-      map.emplace("Enemy__Shooter_" + std::to_string(id++), initEnemyShooter());
-    }
-
-    return map;
-  }();
-
-  m_enemiesCommander = [] {
-    std::unordered_map< std::string, Sprite > map;
-
-    static auto id = 0;
-
-    for (auto i = 0; i < ENEMIES_PER_ROW; ++i) {
-      map.emplace("Enemy__Commander_" + std::to_string(id++),
-                  initEnemyCommander());
-    }
-
-    return map;
-  }();
-
-  m_player = initPlayer();
-
-  m_obstacleLL = { "Obstacle__LL",
-                   Vector2{ WINDOW_SIZE.x / 4 - OBSTACLE_SIZE.x, OBSTACLE_Y },
-                   OBSTACLE_SIZE,
-                   OBSTACLE_CELL_SIZE,
-                   OBSTACLE_COLOR };
-
-  m_obstacleLR = { "Obstacle__LR",
-                   Vector2{ WINDOW_SIZE.x / 4 + 2 * OBSTACLE_SIZE.x,
-                            OBSTACLE_Y },
-                   OBSTACLE_SIZE,
-                   OBSTACLE_CELL_SIZE,
-                   OBSTACLE_COLOR };
-
-  m_obstacleRL = { "Obstacle__RL",
-                   Vector2{ WINDOW_SIZE.x * 3 / 4 - 2 * OBSTACLE_SIZE.x,
-                            OBSTACLE_Y },
-                   OBSTACLE_SIZE,
-                   OBSTACLE_CELL_SIZE,
-                   OBSTACLE_COLOR };
-
-  m_obstacleRR = { "Obstacle__RR",
-                   Vector2{ WINDOW_SIZE.x * 3 / 4 - OBSTACLE_SIZE.x,
-                            OBSTACLE_Y },
-                   OBSTACLE_SIZE,
-                   OBSTACLE_CELL_SIZE,
-                   OBSTACLE_COLOR };
-
-  m_scoreText = { "Text__Score", "Score: 0", FONT_PATH, Vector2{ 10, 10 },
-                  FONT_SIZE,     FONT_COLOR, 1 };
-
-  m_levelText = { "Text__Level",
-                  "Level: 1",
-                  FONT_PATH,
-                  Vector2{ WINDOW_SIZE.x - 200, WINDOW_SIZE.y - 40 },
-                  FONT_SIZE,
-                  FONT_COLOR,
-                  1 };
-
-  m_projectiles.clear();
+//  m_projectiles.clear();
 
   showAll();
 }
