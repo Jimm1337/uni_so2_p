@@ -3,7 +3,7 @@
 ### Projekt SO2
 
 ## DEMO:
-[DEMO_VIDEO (GDRIVE)](https://drive.google.com/file/d/13uWfqpQ1nMKCuiGQmNLuhnzP8vwH-rDa/view?usp=drive_link)
+[DEMO_VIDEO (GDRIVE)](https://drive.google.com/file/d/1G1PDCY9tFm7a9iVKaNwNW6zsHytZQpvF/view?usp=sharing)
 
 ## BUILD:
 
