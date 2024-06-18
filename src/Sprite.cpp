@@ -1,36 +1,9 @@
 #include "Sprite.hpp"
+#include <cstdio>
+#include <iostream>
+#include "fmt/core.h"
 
 namespace so {
-
-Sprite::Sprite(Sprite&& other) noexcept:
-  Object(std::move(other)),
-  m_texture{ other.m_texture },
-  m_destroyedTexture{ other.m_destroyedTexture },
-  m_spriteClass{ other.m_spriteClass },
-  m_scale{ other.m_scale } {
-  other.m_texture          = { 0 };
-  other.m_destroyedTexture = { 0 };
-  other.m_scale            = 0.0F;
-}
-
-Sprite& Sprite::operator=(Sprite&& other) noexcept {
-  const auto lock = std::unique_lock{ m_mutex };
-
-  if (this == &other) [[unlikely]] { return *this; }
-
-  Object::operator=(std::move(other));
-
-  m_texture          = other.m_texture;
-  m_destroyedTexture = other.m_destroyedTexture;
-  m_spriteClass      = other.m_spriteClass;
-  m_scale            = other.m_scale;
-
-  other.m_texture          = { 0 };
-  other.m_destroyedTexture = { 0 };
-  other.m_scale            = 0.0F;
-
-  return *this;
-}
 
 void Sprite::draw() const {
   const auto lock = std::unique_lock{ m_mutex };
@@ -67,12 +40,14 @@ void Sprite::markDestroyed() {
 }
 
 void Sprite::onUpdate() {
-  if (m_visible && m_destroyed) [[unlikely]] {
-    const auto now = std::chrono::high_resolution_clock::now();
+  if (m_noUpdate) [[unlikely]] { return; }
 
+  const auto now = std::chrono::high_resolution_clock::now();
+
+  if (m_visible && m_destroyed) {
     if (std::chrono::duration_cast< std::chrono::milliseconds >(now -
                                                                 m_destroyedTime)
-          .count() >= DESTROYED_TIME) [[unlikely]] {
+          .count() >= DESTROYED_TIME) {
       m_visible = false;
       destroy();
     }

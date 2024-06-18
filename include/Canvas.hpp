@@ -12,9 +12,9 @@ class Canvas : public Grid {
 
 public:
   Canvas(const Canvas& other) = delete;
-  Canvas(Canvas&& other) noexcept;
+  Canvas(Canvas&& other) = delete;
   Canvas& operator=(const Canvas& other) = delete;
-  Canvas& operator=(Canvas&& other) noexcept;
+  Canvas& operator=(Canvas&& other) = delete;
   ~Canvas() override = default;
 
   template< typename... BehaviorType >

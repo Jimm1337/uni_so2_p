@@ -15,21 +15,21 @@ public:
     GENERIC [[maybe_unused]] = 255
   };
 
-  Sprite(const Sprite& other) = delete;
-  Sprite(Sprite&& other) noexcept;
+  Sprite(const Sprite& other)            = delete;
+  Sprite(Sprite&& other)                 = delete;
   Sprite& operator=(const Sprite& other) = delete;
-  Sprite& operator=(Sprite&& other) noexcept;
-  ~Sprite() override = default;
+  Sprite& operator=(Sprite&& other)      = delete;
+  ~Sprite() override                     = default;
 
   template< typename PositionType, typename... BehaviorType >
-  requires std::is_same_v< Vector2, std::remove_cvref_t<PositionType> > &&
+  requires std::is_same_v< Vector2, std::remove_cvref_t< PositionType > > &&
              (std::is_invocable_v< BehaviorType, Sprite& > && ...)
   Sprite(std::string_view name,
          std::string_view texturePath,
          std::string_view destroyedTexturePath,
          float            scale,
          PositionType&&   position,
-         CLASS            spriteClass = CLASS::GENERIC,
+         bool             noUpdate    = false,
          BehaviorType&&... behaviors):
     Object(name,
            Object::TYPE::SPRITE,
@@ -45,12 +45,8 @@ public:
       const auto tex  = LoadTexture(destroyedTexturePath.data());
       return tex;
     }() },
-    m_spriteClass{ spriteClass },
-    m_scale{ scale } {
-  }
-
-  [[nodiscard]] CLASS getSpriteClass() const noexcept {
-    return m_spriteClass;
+    m_scale{ scale },
+    m_noUpdate{ noUpdate } {
   }
 
   [[nodiscard]] bool isDestroyed() const noexcept {
@@ -78,10 +74,10 @@ protected:
   Texture2D m_texture;
   Texture2D m_destroyedTexture;
   std::chrono::time_point< std::chrono::high_resolution_clock > m_destroyedTime;
-  CLASS                                                         m_spriteClass;
   float                                                         m_scale;
   bool m_destroyed{ false };
   bool m_visible{ true };
+  bool m_noUpdate{ false };
 };
 
 } // namespace so

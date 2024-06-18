@@ -13,9 +13,9 @@ public:
   };
 
   Projectile(const Projectile& other) = delete;
-  Projectile(Projectile&& other) noexcept;
+  Projectile(Projectile&& other) = delete;
   Projectile& operator=(const Projectile& other) = delete;
-  Projectile& operator=(Projectile&& other) noexcept;
+  Projectile& operator=(Projectile&& other) = delete;
   ~Projectile() override = default;
 
   template< typename... BehaviorType >
@@ -43,6 +43,30 @@ public:
     const auto lock = std::unique_lock{ m_mutex };
 
     return m_collided;
+  }
+
+  [[nodiscard]] Direction getDirection() const noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+
+    return m_direction;
+  }
+
+  [[nodiscard]] std::string_view getSourceName() const noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+
+    return m_sourceName;
+  }
+
+  [[nodiscard]] float getSpeed() const noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+
+    return m_speed;
+  }
+
+  [[nodiscard]] Color getColor() const noexcept {
+    const auto lock = std::unique_lock{ m_mutex };
+
+    return m_color;
   }
 
   void markCollided();

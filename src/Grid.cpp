@@ -36,66 +36,16 @@ std::vector< size_t > Grid::getRectIndices(Rectangle   rect,
   return indices;
 }
 
-Grid::Grid(Grid&& other) noexcept:
-  Object(std::move(other)),
-  m_cellSize{ other.m_cellSize },
-  m_gridSize(other.m_gridSize),
-  m_locations(std::move(other.m_locations)),
-  m_cells{ std::move(other.m_cells) },
-  m_gridClass{ other.m_gridClass } {
-  other.m_cellSize = { 0, 0 };
-  other.m_cells.clear();
-  other.m_gridSize = { 0, 0 };
-  other.m_locations.clear();
-}
-
-Grid& Grid::operator=(Grid&& other) noexcept {
-  const auto lock = std::unique_lock{ m_mutex };
-
-  if (this == &other) [[unlikely]] { return *this; }
-
-  Object::operator=(std::move(other));
-
-  m_cellSize  = other.m_cellSize;
-  m_gridSize  = other.m_gridSize;
-  m_locations = std::move(other.m_locations);
-  m_cells     = std::move(other.m_cells);
-  m_gridClass = other.m_gridClass;
-
-  other.m_cellSize = { 0, 0 };
-  other.m_cells.clear();
-  other.m_gridSize = { 0, 0 };
-  other.m_locations.clear();
-
-  return *this;
-}
-
 void Grid::putObject(Object& object) {
   const auto lock = std::unique_lock{ m_mutex };
 
-  const auto indices =
-    getRectIndices(object.getRect(), m_cellSize, m_gridSize.x);
-
-  if (indices.empty()) { return; }
-
-  m_locations[&object] = indices[0];
-
-  std::ranges::for_each(
-    indices, [&](const auto index) { m_cells[index].occupied = true; });
+  m_objects.emplace_back(&object);
 }
 
 void Grid::removeObject(Object& object) {
   const auto lock = std::unique_lock{ m_mutex };
 
-  const auto indices =
-    getRectIndices(object.getRect(), m_cellSize, m_gridSize.x);
-
-  if (indices.empty()) { return; }
-
-  m_locations.erase(&object);
-
-  std::ranges::for_each(
-    indices, [&](const auto index) { m_cells[index].occupied = false; });
+  m_objects.remove(&object);
 }
 
 void Grid::putCell(uVec2 position) {

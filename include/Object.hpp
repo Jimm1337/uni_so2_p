@@ -21,10 +21,10 @@ public:
     GENERIC [[maybe_unused]] = 255
   };
 
-  Object(const Object& other);
-  Object(Object&& other) noexcept;
-  Object& operator=(const Object& other);
-  Object& operator=(Object&& other) noexcept;
+  Object(const Object& other) = delete;
+  Object(Object&& other) = delete;
+  Object& operator=(const Object& other) = delete;
+  Object& operator=(Object&& other) = delete;
   virtual ~Object();
 
   template< typename PositionType, typename... BehaviorType >
@@ -101,17 +101,17 @@ public:
   [[nodiscard]] virtual Rectangle getRect() const;
 
 private:
-  static void update(const std::stop_token& token, Object& object);
+  static void update(Object& object);
 
 public:
   static std::recursive_mutex gpuMutex;
-  static std::recursive_mutex kbdMutex;
 
 protected:
   mutable std::recursive_mutex                  m_mutex;
   std::vector< std::function< void(Object&) > > m_behaviors;
   std::string                                   m_name;
   std::jthread                                  m_updateThread;
+  std::atomic_bool                              m_stop{ false };
   Vector2                                       m_position;
   TYPE                                          m_type;
   bool                                          m_valid{ false };

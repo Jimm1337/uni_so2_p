@@ -8,9 +8,9 @@ namespace so {
 class Text : public Object {
 public:
   Text(const Text& other) = delete;
-  Text(Text&& other) noexcept;
+  Text(Text&& other) = delete;
   Text& operator=(const Text& other) = delete;
-  Text& operator=(Text&& other) noexcept;
+  Text& operator=(Text&& other) = delete;
   ~Text() override = default;
 
   template< typename... BehaviorType >

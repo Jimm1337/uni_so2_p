@@ -5,59 +5,6 @@
 namespace so {
 
 std::recursive_mutex Object::Object::gpuMutex;
-std::recursive_mutex Object::Object::kbdMutex;
-
-Object::Object(const Object& other):
-  m_name(other.m_name),
-  m_position(other.m_position),
-  m_behaviors(other.m_behaviors),
-  m_type(other.m_type) {
-  create();
-}
-
-Object::Object(Object&& other) noexcept:
-  m_name(std::move(other.m_name)),
-  m_position(other.m_position),
-  m_behaviors(std::move(other.m_behaviors)),
-  m_type(other.m_type),
-  m_updateThread(std::move(other.m_updateThread)),
-  m_valid(other.m_valid), m_hidden(other.m_hidden) {
-  other.m_valid = false;
-}
-
-Object& Object::operator=(const Object& other) {
-  const auto lock = std::unique_lock{ m_mutex };
-
-  if (this == &other) [[unlikely]] { return *this; }
-
-  m_name      = other.m_name;
-  m_position  = other.m_position;
-  m_behaviors = other.m_behaviors;
-  m_type      = other.m_type;
-  m_valid     = false;
-
-  create();
-
-  return *this;
-}
-
-Object& Object::operator=(Object&& other) noexcept {
-  const auto lock = std::unique_lock{ m_mutex };
-
-  if (this == &other) [[unlikely]] { return *this; }
-
-  m_name         = std::move(other.m_name);
-  m_position     = other.m_position;
-  m_behaviors    = std::move(other.m_behaviors);
-  m_type         = other.m_type;
-  m_updateThread = std::move(other.m_updateThread);
-  m_valid        = other.m_valid;
-  m_hidden       = other.m_hidden;
-
-  other.m_valid = false;
-
-  return *this;
-}
 
 Object::~Object() {
   const auto lock = std::unique_lock{ m_mutex };
@@ -72,7 +19,7 @@ void Object::create() {
 
   onCreate();
 
-  m_updateThread = std::jthread(&Object::update, std::ref(*this));
+  m_updateThread = std::jthread(update, std::ref(*this));
 
   m_valid = true;
 }
@@ -84,7 +31,7 @@ void Object::destroy() {
 
   m_valid = false;
 
-  if (m_updateThread.joinable()) [[likely]] { m_updateThread.request_stop(); }
+  if (m_updateThread.joinable()) [[likely]] { m_stop = true; }
 
   onDestroy();
 }
@@ -98,15 +45,19 @@ Rectangle Object::getRect() const {
   return { m_position.x, m_position.y, 0.0F, 0.0F };
 }
 
-void Object::update(const std::stop_token& token, Object& object) {
-  while (!token.stop_requested()) {
-    const auto lock = std::unique_lock{ object.m_mutex };
+void Object::update(Object& object) {
+  while (!object.m_stop) {
+    object.m_mutex.lock();
 
-    std::ranges::for_each(object.m_behaviors, [&](const auto& behavior) {
+    std::ranges::for_each(object.m_behaviors, [&object](const auto& behavior) {
       behavior(object);
     });
 
     object.onUpdate();
+
+    object.m_mutex.unlock();
+
+    std::this_thread::yield();
   }
 }
 

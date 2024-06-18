@@ -1,6 +1,9 @@
 #include "Game.hpp"
 #include <raylib.h>
 #include <algorithm>
+#include <iostream>
+#include <random>
+#include "fmt/core.h"
 
 namespace so {
 
@@ -15,36 +18,83 @@ Game::Game():
                FONT_SIZE,
                FONT_COLOR,
                1 },
-  m_obstacleLL{ "Obstacle__LL",
-                Vector2{ WINDOW_SIZE.x / 4 - OBSTACLE_SIZE.x, OBSTACLE_Y },
-                OBSTACLE_SIZE,
-                OBSTACLE_CELL_SIZE,
-                OBSTACLE_COLOR },
-  m_obstacleLR{ "Obstacle__LR",
-                Vector2{ WINDOW_SIZE.x / 4 + 2 * OBSTACLE_SIZE.x, OBSTACLE_Y },
-                OBSTACLE_SIZE,
-                OBSTACLE_CELL_SIZE,
-                OBSTACLE_COLOR },
-  m_obstacleRL{ "Obstacle__RL",
-                Vector2{ WINDOW_SIZE.x * 3 / 4 - 2 * OBSTACLE_SIZE.x,
-                         OBSTACLE_Y },
-                OBSTACLE_SIZE,
-                OBSTACLE_CELL_SIZE,
-                OBSTACLE_COLOR },
-  m_obstacleRR{ "Obstacle__RR",
-                Vector2{ WINDOW_SIZE.x * 3 / 4 - OBSTACLE_SIZE.x, OBSTACLE_Y },
-                OBSTACLE_SIZE,
-                OBSTACLE_CELL_SIZE,
-                OBSTACLE_COLOR },
   m_player{ initPlayer() },
   m_score{},
   m_lives{},
   m_level{},
   m_gameActive{ false },
-  m_gameOver{ false } {
+  m_gameOver{ false },
+  m_livesSprites{ Sprite{ "Life__1",
+                          TEXTURE_PLAYER,
+                          TEXTURE_DESTROYED,
+                          0.5,
+                          Vector2{ 30, WINDOW_SIZE.y - 40 },
+                          true },
+                  Sprite{ "Life__2",
+                          TEXTURE_PLAYER,
+                          TEXTURE_DESTROYED,
+                          0.5,
+                          Vector2{ 80, WINDOW_SIZE.y - 40 },
+                          true },
+                  Sprite{ "Life__3",
+                          TEXTURE_PLAYER,
+                          TEXTURE_DESTROYED,
+                          0.5,
+                          Vector2{ 130, WINDOW_SIZE.y - 40 },
+                          true } } {
 }
 
 void Game::run() {
+  for (auto id = 0; id < ENEMIES_PER_ROW; ++id) {
+    const auto pos =
+      Vector2{ static_cast< float >(2 * TEXTURE_ENEMY_WIDTH * (1 + id)),
+               static_cast< float >(ENEMY_PASSIVE_Y) };
+
+    m_enemiesPassive.emplace_back("Enemy__Passive_" + std::to_string(id),
+                                  TEXTURE_ENEMY_PASSIVE,
+                                  TEXTURE_DESTROYED,
+                                  1,
+                                  pos);
+  }
+
+  for (auto id = 0; id < ENEMIES_PER_ROW; ++id) {
+    const auto pos = Vector2{
+      static_cast< float >(2 * TEXTURE_ENEMY_WIDTH * (1 + id)),
+      static_cast< float >(ENEMY_PASSIVE_Y + TEXTURE_ENEMY_HEIGHT * 2)
+    };
+
+    m_enemiesPassive.emplace_back(
+      "Enemy__Passive_" + std::to_string(id + ENEMIES_PER_ROW),
+      TEXTURE_ENEMY_PASSIVE,
+      TEXTURE_DESTROYED,
+      1,
+      pos);
+  }
+
+  for (auto id = 0; id < ENEMIES_PER_ROW; ++id) {
+    const auto pos =
+      Vector2{ static_cast< float >(2 * TEXTURE_ENEMY_WIDTH * (1 + id)),
+               static_cast< float >(ENEMY_SHOOTER_Y) };
+
+    m_enemiesShooter.emplace_back("Enemy__Shooter_" + std::to_string(id),
+                                  TEXTURE_ENEMY_SHOOTER,
+                                  TEXTURE_DESTROYED,
+                                  1,
+                                  pos);
+  }
+
+  for (auto id = 0; id < ENEMIES_PER_ROW; ++id) {
+    const auto pos =
+      Vector2{ static_cast< float >(2 * TEXTURE_ENEMY_WIDTH * (1 + id)),
+               static_cast< float >(ENEMY_COM_Y) };
+
+    m_enemiesCommander.emplace_back("Enemy__Commander_" + std::to_string(id),
+                                    TEXTURE_ENEMY_COM,
+                                    TEXTURE_DESTROYED,
+                                    1,
+                                    pos);
+  }
+
   hideAll();
   addBehaviorsToPlayer();
   addBehaviorsToEnemiesPassive();
@@ -55,7 +105,6 @@ void Game::run() {
   while (!WindowShouldClose()) {
     if (m_gameOver) [[unlikely]] {
       renderGameOverScreen();
-      if (IsKeyDown(KEY_ENTER)) [[unlikely]] { startGame(); }
 
     } else if (!m_gameActive) [[unlikely]] {
       renderStartScreen();
@@ -64,6 +113,10 @@ void Game::run() {
     } else [[likely]] {
       renderGameScreen();
     }
+
+    cleanup();
+    std::this_thread::yield();
+    std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
   }
 }
 
@@ -73,55 +126,6 @@ Sprite Game::initPlayer() {
            TEXTURE_DESTROYED,
            1,
            Vector2{ WINDOW_SIZE.x / 2, PLAYER_Y } };
-}
-
-Sprite Game::initEnemyPassive() {
-  static auto id = 0ULL;
-
-  const auto pos =
-    Vector2{ static_cast< float >((1 + (2 * (id % ENEMIES_PER_ROW))) *
-                                  TEXTURE_ENEMY_WIDTH),
-             static_cast< float >(ENEMY_PASSIVE_Y * (1 + id % 2)) };
-
-  ++id;
-
-  return { "Enemy__Passive_" + std::to_string(id),
-           TEXTURE_ENEMY_PASSIVE,
-           TEXTURE_DESTROYED,
-           1,
-           pos };
-}
-
-Sprite Game::initEnemyShooter() {
-  static auto id = 0;
-
-  const auto pos =
-    Vector2{ static_cast< float >((1 + (2 * (id % ENEMIES_PER_ROW))) *
-                                  TEXTURE_ENEMY_WIDTH),
-             static_cast< float >(ENEMY_SHOOTER_Y * (1 + id % 2)) };
-
-  ++id;
-
-  return { "Enemy__Shooter_" + std::to_string(id),
-           TEXTURE_ENEMY_SHOOTER,
-           TEXTURE_DESTROYED,
-           1,
-           pos };
-}
-
-Sprite Game::initEnemyCommander() {
-  static auto id = 0;
-
-  const auto pos =
-    Vector2{ static_cast< float >((1 + (2 * (id % ENEMIES_PER_ROW))) *
-                                  TEXTURE_ENEMY_WIDTH),
-             static_cast< float >(ENEMY_COM_Y) };
-
-  return { "Enemy__Commander_" + std::to_string(id),
-           TEXTURE_ENEMY_COM,
-           TEXTURE_DESTROYED,
-           1,
-           pos };
 }
 
 void Game::renderStartScreen() {
@@ -146,14 +150,9 @@ void Game::renderGameOverScreen() {
 
   Object::gpuMutex.lock();
   DrawText("Game Over",
-           WINDOW_SIZE.x / 3 + 60,
-           WINDOW_SIZE.y / 2,
-           FONT_SIZE_CTA,
-           FONT_COLOR);
-  DrawText("Press ENTER to restart",
            WINDOW_SIZE.x / 3,
-           WINDOW_SIZE.y / 2 + FONT_SIZE_CTA,
-           FONT_SIZE,
+           WINDOW_SIZE.y / 2 - FONT_SIZE_CTA,
+           FONT_SIZE_CTA,
            FONT_COLOR);
   Object::gpuMutex.unlock();
 
@@ -172,18 +171,29 @@ void Game::renderGameScreen() {
 
 void Game::addBehaviorsToPlayer() {
   m_player.addBehavior([](Object& object) {
-    auto& player = dynamic_cast< Sprite& >(object);
-
-    if (IsKeyDown(KEY_LEFT)) {
-      player.setPosition(
-        Vector2{ player.getPosition().x - .5F * GetFrameTime(),
-                 player.getPosition().y });
+    if (object.getPosition().x > 4.0 && IsKeyDown(KEY_A)) {
+      object.setPosition(Vector2{ object.getPosition().x - .3F * GetFrameTime(),
+                                  object.getPosition().y });
     }
 
-    if (IsKeyDown(KEY_RIGHT)) {
-      player.setPosition(
-        Vector2{ player.getPosition().x + .5F * GetFrameTime(),
-                 player.getPosition().y });
+    if (object.getPosition().x < WINDOW_SIZE.x - TEXTURE_PLAYER_WIDTH - 4.0 &&
+        IsKeyDown(KEY_D)) {
+      object.setPosition(Vector2{ object.getPosition().x + .3F * GetFrameTime(),
+                                  object.getPosition().y });
+    }
+  });
+
+  m_player.addBehavior([this](Object&) {
+    static auto lastShot = std::chrono::high_resolution_clock::now();
+
+    if (!m_gameActive) { return; }
+
+    if (IsKeyPressed(KEY_SPACE) &&
+        std::chrono::duration_cast< std::chrono::milliseconds >(
+          std::chrono::high_resolution_clock::now() - lastShot)
+            .count() > 500) {
+      shootPlayer();
+      lastShot = std::chrono::high_resolution_clock::now();
     }
   });
 }
@@ -192,79 +202,202 @@ void Game::addBehaviorsToEnemiesPassive() {
 }
 
 void Game::addBehaviorsToEnemiesShooter() {
+  std::ranges::for_each(m_enemiesShooter, [this](auto& enemy) {
+    enemy.addBehavior([this](Object& object) {
+      if (!m_gameActive) { return; }
+
+      static auto lastShot = std::chrono::high_resolution_clock::now();
+
+      if (std::chrono::duration_cast< std::chrono::milliseconds >(
+            std::chrono::high_resolution_clock::now() - lastShot)
+            .count() > 500) {
+        shootEnemy(dynamic_cast< Sprite& >(object));
+        lastShot = std::chrono::high_resolution_clock::now();
+      }
+    });
+  });
 }
 
 void Game::addBehaviorsToEnemiesCommander() {
 }
 
-void Game::addBehaviorsToProjectile(Projectile& projectile) {
+void Game::addBehaviorsToProjectilePlayer(Projectile& projectile) {
+  projectile.addBehavior([this](Object& object) {
+    if (object.getPosition().y < 0.) {
+      m_canvas.removeObject(object);
+      object.destroy();
+    }
+  });
+
+  projectile.addBehavior([this](Object& object) {
+    for (auto& enemy : m_enemiesPassive) {
+      if (!enemy.isDestroyed() &&
+          CheckCollisionRecs(object.getRect(), enemy.getRect())) {
+        m_canvas.removeObject(object);
+        object.destroy();
+        enemy.markDestroyed();
+        m_score += 10;
+        m_scoreText.setText(fmt::format("Score: {}", m_score));
+      }
+    }
+
+    for (auto& enemy : m_enemiesShooter) {
+      if (!enemy.isDestroyed() &&
+          CheckCollisionRecs(object.getRect(), enemy.getRect())) {
+        m_canvas.removeObject(object);
+        object.destroy();
+        enemy.markDestroyed();
+        m_score += 20;
+        m_scoreText.setText(fmt::format("Score: {}", m_score));
+      }
+    }
+
+    for (auto& enemy : m_enemiesCommander) {
+      if (!enemy.isDestroyed() &&
+          CheckCollisionRecs(object.getRect(), enemy.getRect())) {
+        m_canvas.removeObject(object);
+        object.destroy();
+        enemy.markDestroyed();
+        m_score += 30;
+        m_scoreText.setText(fmt::format("Score: {}", m_score));
+      }
+    }
+  });
+}
+
+void Game::addBehaviorsToProjectileEnemy(so::Projectile& projectile) {
+  projectile.addBehavior([this](Object& object) {
+    if (object.getPosition().y > PLAYER_Y + TEXTURE_PLAYER_HEIGHT) {
+      m_canvas.removeObject(object);
+      object.destroy();
+    }
+  });
+
+  projectile.addBehavior([this](Object& object) {
+    if (CheckCollisionRecs(object.getRect(), m_player.getRect())) {
+      m_canvas.removeObject(object);
+      object.destroy();
+      m_livesSprites[m_lives - 1].markDestroyed();
+      --m_lives;
+      m_player.setPosition(Vector2{ WINDOW_SIZE.x / 2, PLAYER_Y });
+      if (m_lives == 0) {
+        m_gameOver   = true;
+        m_gameActive = false;
+        hideAll();
+        m_scoreText.unHide();
+        m_levelText.unHide();
+      }
+    }
+  });
+}
+
+void Game::shootPlayer() {
+  static auto id = 0;
+
+  const auto      pos     = m_player.getPosition();
+  const Rectangle newProj = {
+    pos.x + (TEXTURE_PLAYER_WIDTH / 2 - 2), pos.y - 10, 4, 10
+  };
+
+  m_playerProjectiles.emplace_back(
+    std::make_unique< Projectile >("PlayerProjectile__" + std::to_string(id++),
+                                   "Player",
+                                   newProj,
+                                   .5f,
+                                   Projectile::Direction::UP,
+                                   WHITE));
+
+  auto& proj = *m_playerProjectiles.back();
+  addBehaviorsToProjectilePlayer(proj);
+
+  m_canvas.putObject(proj);
+}
+
+void Game::shootEnemy(Sprite& enemy) {
+  static auto id = 0;
+
+  static std::random_device                   rd;
+  static std::mt19937                         gen(rd());
+  static std::uniform_int_distribution< int > dis(0, 3);
+
+  if (dis(gen) != 0) [[unlikely]] { return; }
+
+  const auto      pos     = enemy.getPosition();
+  const Rectangle newProj = {
+    pos.x + (TEXTURE_ENEMY_WIDTH / 2 - 2), pos.y + TEXTURE_ENEMY_HEIGHT, 4, 10
+  };
+
+  m_enemyProjectiles.emplace_back(
+    std::make_unique< Projectile >("EnemyProjectile__" + std::to_string(id++),
+                                   enemy.getName(),
+                                   newProj,
+                                   .3f,
+                                   Projectile::Direction::DOWN,
+                                   ORANGE));
+
+  auto& proj = *m_enemyProjectiles.back();
+  addBehaviorsToProjectileEnemy(proj);
+
+  m_canvas.putObject(proj);
 }
 
 void Game::hideAll() {
-  std::ranges::for_each(m_enemiesCommander,
-                        [](auto& pair) { pair.second.hide(); });
+  std::ranges::for_each(m_enemiesCommander, [](auto& enemy) { enemy.hide(); });
 
-  std::ranges::for_each(m_enemiesShooter,
-                        [](auto& pair) { pair.second.hide(); });
+  std::ranges::for_each(m_enemiesShooter, [](auto& enemy) { enemy.hide(); });
 
-  std::ranges::for_each(m_enemiesPassive,
-                        [](auto& pair) { pair.second.hide(); });
+  std::ranges::for_each(m_enemiesPassive, [](auto& enemy) { enemy.hide(); });
+
+  std::ranges::for_each(m_playerProjectiles,
+                        [](auto& projectile) { projectile->hide(); });
+
+  std::ranges::for_each(m_enemyProjectiles,
+                        [](auto& projectile) { projectile->hide(); });
 
   m_player.hide();
-
-  m_obstacleLL.hide();
-  m_obstacleLR.hide();
-  m_obstacleRL.hide();
-  m_obstacleRR.hide();
 
   m_scoreText.hide();
 
   m_levelText.hide();
+
+  std::ranges::for_each(m_livesSprites, [](auto& sprite) { sprite.hide(); });
 }
 
 void Game::showAll() {
   std::ranges::for_each(m_enemiesCommander,
-                        [](auto& pair) { pair.second.unHide(); });
+                        [](auto& enemy) { enemy.unHide(); });
 
-  std::ranges::for_each(m_enemiesShooter,
-                        [](auto& pair) { pair.second.unHide(); });
+  std::ranges::for_each(m_enemiesShooter, [](auto& enemy) { enemy.unHide(); });
 
-  std::ranges::for_each(m_enemiesPassive,
-                        [](auto& pair) { pair.second.unHide(); });
+  std::ranges::for_each(m_enemiesPassive, [](auto& enemy) { enemy.unHide(); });
 
   m_player.unHide();
-
-  m_obstacleLL.unHide();
-  m_obstacleLR.unHide();
-  m_obstacleRL.unHide();
-  m_obstacleRR.unHide();
 
   m_scoreText.unHide();
 
   m_levelText.unHide();
+
+  std::ranges::for_each(m_livesSprites, [](auto& sprite) { sprite.unHide(); });
 }
 
 void Game::addAllToCanvas() {
-  std::ranges::for_each(m_enemiesCommander, [this](auto& pair) {
-    m_canvas.putObject(pair.second);
-  });
+  std::ranges::for_each(m_enemiesCommander,
+                        [this](auto& enemy) { m_canvas.putObject(enemy); });
 
-  std::ranges::for_each(
-    m_enemiesShooter, [this](auto& pair) { m_canvas.putObject(pair.second); });
+  std::ranges::for_each(m_enemiesShooter,
+                        [this](auto& enemy) { m_canvas.putObject(enemy); });
 
-  std::ranges::for_each(
-    m_enemiesPassive, [this](auto& pair) { m_canvas.putObject(pair.second); });
+  std::ranges::for_each(m_enemiesPassive,
+                        [this](auto& enemy) { m_canvas.putObject(enemy); });
 
   m_canvas.putObject(m_player);
-
-  //  m_canvas.putObject(m_obstacleLL);
-  //  m_canvas.putObject(m_obstacleLR);
-  //  m_canvas.putObject(m_obstacleRL);
-  //  m_canvas.putObject(m_obstacleRR);
 
   m_canvas.putObject(m_scoreText);
 
   m_canvas.putObject(m_levelText);
+
+  std::ranges::for_each(m_livesSprites,
+                        [this](auto& sprite) { m_canvas.putObject(sprite); });
 }
 
 void Game::initCanvas() {
@@ -283,86 +416,14 @@ void Game::startGame() {
   m_lives      = 3;
   m_level      = 1;
 
-//  m_enemiesPassive = [] {
-//    std::unordered_map< std::string, Sprite > map;
-//
-//    static auto id = 0;
-//
-//    for (auto i = 0; i < ENEMIES_PER_ROW * 2; ++i) {
-//      map.emplace("Enemy__Passive_" + std::to_string(id++), initEnemyPassive());
-//    }
-//
-//    return map;
-//  }();
-//
-//  m_enemiesShooter = [] {
-//    std::unordered_map< std::string, Sprite > map;
-//
-//    static auto id = 0;
-//
-//    for (auto i = 0; i < ENEMIES_PER_ROW * 2; ++i) {
-//      map.emplace("Enemy__Shooter_" + std::to_string(id++), initEnemyShooter());
-//    }
-//
-//    return map;
-//  }();
-//
-//  m_enemiesCommander = [] {
-//    std::unordered_map< std::string, Sprite > map;
-//
-//    static auto id = 0;
-//
-//    for (auto i = 0; i < ENEMIES_PER_ROW; ++i) {
-//      map.emplace("Enemy__Commander_" + std::to_string(id++),
-//                  initEnemyCommander());
-//    }
-//
-//    return map;
-//  }();
-
-//  m_player = initPlayer();
-
-//  m_obstacleLL = { "Obstacle__LL",
-//                   Vector2{ WINDOW_SIZE.x / 4 - OBSTACLE_SIZE.x, OBSTACLE_Y },
-//                   OBSTACLE_SIZE,
-//                   OBSTACLE_CELL_SIZE,
-//                   OBSTACLE_COLOR };
-//
-//  m_obstacleLR = { "Obstacle__LR",
-//                   Vector2{ WINDOW_SIZE.x / 4 + 2 * OBSTACLE_SIZE.x,
-//                            OBSTACLE_Y },
-//                   OBSTACLE_SIZE,
-//                   OBSTACLE_CELL_SIZE,
-//                   OBSTACLE_COLOR };
-//
-//  m_obstacleRL = { "Obstacle__RL",
-//                   Vector2{ WINDOW_SIZE.x * 3 / 4 - 2 * OBSTACLE_SIZE.x,
-//                            OBSTACLE_Y },
-//                   OBSTACLE_SIZE,
-//                   OBSTACLE_CELL_SIZE,
-//                   OBSTACLE_COLOR };
-//
-//  m_obstacleRR = { "Obstacle__RR",
-//                   Vector2{ WINDOW_SIZE.x * 3 / 4 - OBSTACLE_SIZE.x,
-//                            OBSTACLE_Y },
-//                   OBSTACLE_SIZE,
-//                   OBSTACLE_CELL_SIZE,
-//                   OBSTACLE_COLOR };
-//
-//  m_scoreText = { "Text__Score", "Score: 0", FONT_PATH, Vector2{ 10, 10 },
-//                  FONT_SIZE,     FONT_COLOR, 1 };
-//
-//  m_levelText = { "Text__Level",
-//                  "Level: 1",
-//                  FONT_PATH,
-//                  Vector2{ WINDOW_SIZE.x - 200, WINDOW_SIZE.y - 40 },
-//                  FONT_SIZE,
-//                  FONT_COLOR,
-//                  1 };
-
-//  m_projectiles.clear();
-
   showAll();
+}
+
+void Game::cleanup() {
+  std::erase_if(m_playerProjectiles,
+                [](const auto& projectile) { return !projectile->isValid(); });
+  std::erase_if(m_enemyProjectiles,
+                [](const auto& projectile) { return !projectile->isValid(); });
 }
 
 } // namespace so

@@ -1,9 +1,10 @@
 #ifndef UNI_SO2_P_GRID_HPP
 #define UNI_SO2_P_GRID_HPP
 
-#include "Object.hpp"
 #include <unordered_map>
 #include <vector>
+#include <list>
+#include "Object.hpp"
 
 namespace so {
 
@@ -36,11 +37,11 @@ protected:
     Rectangle rect, uVec2 cellSize, size_t gridWidth) noexcept;
 
 public:
-  Grid(const Grid& other) = delete;
-  Grid(Grid&& other) noexcept;
+  Grid(const Grid& other)            = delete;
+  Grid(Grid&& other)                 = delete;
   Grid& operator=(const Grid& other) = delete;
-  Grid& operator=(Grid&& other) noexcept;
-  ~Grid() override = default;
+  Grid& operator=(Grid&& other)      = delete;
+  ~Grid() override                   = default;
 
   template< typename... BehaviorType >
   requires(std::is_invocable_v< BehaviorType, Grid& > && ...)
@@ -85,13 +86,12 @@ public:
   void                    draw() const override;
   [[nodiscard]] Rectangle getRect() const override;
 
-
 protected:
-  std::vector< Cell >                   m_cells;
-  std::unordered_map< Object*, size_t > m_locations;
-  uVec2                                 m_cellSize;
-  uVec2                                 m_gridSize;
-  CLASS                                 m_gridClass;
+  std::vector< Cell >    m_cells;
+  std::list< Object* > m_objects;
+  uVec2                  m_cellSize;
+  uVec2                  m_gridSize;
+  CLASS                  m_gridClass;
 };
 
 } // namespace so
