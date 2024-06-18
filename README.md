@@ -46,6 +46,10 @@ odpowiednich momentach (linux sobie raczej radzi bez tego ale scheduler windowsa
 - można dodać restartowanie gry po przegranej
 
 ## STRUKTURA PROJEKTU:
+### Główna klasa:
+- GAME
+
+### Komponenty:
 > - OBJECT
 >> - SPRITE
 >> - PROJECTILE
